@@ -16,3 +16,44 @@ graph TD
     E --> F;
     F --> G[解锁高级工具];
 ```
+
+## UE5 实现方案
+
+我们采用以数据资产为核心、接口驱动的模块化设计，以适应UE5的开发模式。
+
+```mermaid
+classDiagram
+    class UObject
+    class UDataAsset
+    class UInterface
+    class AActor
+    class UActorComponent
+
+    UObject <|-- UDataAsset
+    UObject <|-- UInterface
+    UObject <|-- AActor
+    UObject <|-- UActorComponent
+
+    UDataAsset <|-- UTechData
+    UTechData : +FText TechName
+    UTechData : +FText Description
+    UTechData : +float ResearchCost
+    UTechData : +TArray<UTechData*> Prerequisites
+
+    UInterface <|-- ITechUnlockReceiver
+    ITechUnlockReceiver : +OnTechnologyUnlocked(UTechData* UnlockedTech)
+
+    AActor <|-- ATechManager
+    ATechManager : +UnlockTechnology(UTechData* TechToUnlock)
+    ATechManager o-- "many" UTechData : Manages
+    ATechManager --> "notifies" ITechUnlockReceiver
+
+    UActorComponent <|-- UResearchComponent
+    UResearchComponent : +StartResearch(UTechData* Tech)
+    UResearchComponent --> ATechManager : Interacts with
+
+    class APlayerBuildingManager {
+        <<Actor>>
+    }
+    APlayerBuildingManager ..|> ITechUnlockReceiver : Implements
+```
