@@ -24,55 +24,40 @@ graph TD
 ```mermaid
 classDiagram
     direction LR
+
+    UDataAsset <|-- UTechData
+    UDataAsset <|-- UTechTreeAsset
+
+    UTechData : +FName TechID
+    UTechData : +FText DisplayName
+    UTechData : +FVector2D TreePosition
+    UTechData : +TSoftObjectPtr<UTexture2D> Icon
+    UTechData : +TArray<UTechData*> Prerequisites
     
-    package "Data Assets" {
-        class UDataAsset
-        UDataAsset <|-- UTechData
-        UDataAsset <|-- UTechTreeAsset
+    UTechTreeAsset : +TArray<UTechData*> AllTechnologies
 
-        UTechData : +FName TechID
-        UTechData : +FText DisplayName
-        UTechData : +FVector2D TreePosition
-        UTechData : +TSoftObjectPtr<UTexture2D> Icon
-        UTechData : +TArray<UTechData*> Prerequisites
-        
-        UTechTreeAsset : +TArray<UTechData*> AllTechnologies
-    }
+    UObject <|-- UTechSaveGame
+    AActor <|-- ATechManager
+    UActorComponent <|-- UResearchComponent
 
-    package "Runtime" {
-        class AActor
-        class UActorComponent
-        class UObject
-        
-        UObject <|-- UTechSaveGame
-        AActor <|-- ATechManager
-        UActorComponent <|-- UResearchComponent
-
-        ATechManager : +UTechTreeAsset* ActiveTechTree
-        ATechManager : +TMap<FName, FTechProgress> TechStates
-        ATechManager : +IsTechnologyUnlocked(FName TechID) bool
-        ATechManager : +SaveToString() FString
-        ATechManager : +LoadFromString(FString Data)
-        ATechManager o-- UTechTreeAsset : "Uses"
-        
-        UResearchComponent : +StartResearch(UTechData* Tech)
-        UResearchComponent --> ATechManager : "Updates"
-
-        UTechSaveGame : +TMap<FName, FTechProgress> SavedTechStates
-    }
+    ATechManager : +UTechTreeAsset* ActiveTechTree
+    ATechManager : +TMap<FName, FTechProgress> TechStates
+    ATechManager : +IsTechnologyUnlocked(FName TechID) bool
+    ATechManager : +SaveToString() FString
+    ATechManager : +LoadFromString(FString Data)
+    ATechManager o-- UTechTreeAsset : "Uses"
     
-    package "Interfaces" {
-        class UInterface
-        UInterface <|-- ITechUnlockReceiver
-        ITechUnlockReceiver : +OnTechnologyUnlocked(UTechData* UnlockedTech)
-    }
+    UResearchComponent : +StartResearch(UTechData* Tech)
+    UResearchComponent --> ATechManager : "Updates"
 
-    package "UI" {
-        class UUserWidget
-        UUserWidget <|-- UI_TechTree
-        UI_TechTree : "Visualizes"
-        UI_TechTree ..> ATechManager : "Reads data from"
-    }
+    UTechSaveGame : +TMap<FName, FTechProgress> SavedTechStates
+    
+    UInterface <|-- ITechUnlockReceiver
+    ITechUnlockReceiver : +OnTechnologyUnlocked(UTechData* UnlockedTech)
+
+    UUserWidget <|-- UI_TechTree
+    UI_TechTree : "Visualizes"
+    UI_TechTree ..> ATechManager : "Reads data from"
 
     ATechManager --> ITechUnlockReceiver : "Notifies"
 ```
