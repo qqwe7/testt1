@@ -17,43 +17,62 @@ graph TD
     F --> G[解锁高级工具];
 ```
 
-## UE5 实现方案
+## UE5 最终实现方案
 
-我们采用以数据资产为核心、接口驱动的模块化设计，以适应UE5的开发模式。
+基于讨论，我们确定了以下更具体、模块化和可扩展的方案，重点关注了数据驱动、状态管理、持久化和UI分离。
 
 ```mermaid
 classDiagram
-    class UObject
-    class UDataAsset
-    class UInterface
-    class AActor
-    class UActorComponent
+    direction LR
+    
+    package "Data Assets (策划配置)" {
+        class UDataAsset
+        UDataAsset <|-- UTechData
+        UDataAsset <|-- UTechTreeAsset
 
-    UObject <|-- UDataAsset
-    UObject <|-- UInterface
-    UObject <|-- AActor
-    UObject <|-- UActorComponent
-
-    UDataAsset <|-- UTechData
-    UTechData : +FText TechName
-    UTechData : +FText Description
-    UTechData : +float ResearchCost
-    UTechData : +TArray<UTechData*> Prerequisites
-
-    UInterface <|-- ITechUnlockReceiver
-    ITechUnlockReceiver : +OnTechnologyUnlocked(UTechData* UnlockedTech)
-
-    AActor <|-- ATechManager
-    ATechManager : +UnlockTechnology(UTechData* TechToUnlock)
-    ATechManager o-- "many" UTechData : Manages
-    ATechManager --> "notifies" ITechUnlockReceiver
-
-    UActorComponent <|-- UResearchComponent
-    UResearchComponent : +StartResearch(UTechData* Tech)
-    UResearchComponent --> ATechManager : Interacts with
-
-    class APlayerBuildingManager {
-        <<Actor>>
+        UTechData : +FName TechID
+        UTechData : +FText DisplayName
+        UTechData : +FVector2D TreePosition
+        UTechData : +TSoftObjectPtr<UTexture2D> Icon
+        UTechData : +TArray<UTechData*> Prerequisites
+        
+        UTechTreeAsset : +TArray<UTechData*> AllTechnologies
     }
-    APlayerBuildingManager ..|> ITechUnlockReceiver : Implements
+
+    package "Runtime (游戏运行时)" {
+        class AActor
+        class UActorComponent
+        class UObject
+        
+        UObject <|-- UTechSaveGame : (存档对象)
+        AActor <|-- ATechManager
+        UActorComponent <|-- UResearchComponent
+
+        ATechManager : +UTechTreeAsset* ActiveTechTree
+        ATechManager : +TMap<FName, FTechProgress> TechStates
+        ATechManager : +IsTechnologyUnlocked(FName TechID) bool
+        ATechManager : +SaveToString() FString
+        ATechManager : +LoadFromString(FString Data)
+        ATechManager o-- UTechTreeAsset : "Uses"
+        
+        UResearchComponent : +StartResearch(UTechData* Tech)
+        UResearchComponent --> ATechManager : "Updates"
+
+        UTechSaveGame : +TMap<FName, FTechProgress> SavedTechStates
+    }
+    
+    package "Interfaces (解耦)" {
+        class UInterface
+        UInterface <|-- ITechUnlockReceiver
+        ITechUnlockReceiver : +OnTechnologyUnlocked(UTechData* UnlockedTech)
+    }
+
+    package "UI (可视化)" {
+        class UUserWidget
+        UUserWidget <|-- UI_TechTree
+        UI_TechTree : "Visualizes"
+        UI_TechTree ..> ATechManager : "Reads data from"
+    }
+
+    ATechManager --> ITechUnlockReceiver : "Notifies"
 ```
