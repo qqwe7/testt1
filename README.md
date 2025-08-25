@@ -25,7 +25,7 @@ graph TD
 classDiagram
     direction LR
     
-    package "Data Assets (策划配置)" {
+    package "Data Assets" {
         class UDataAsset
         UDataAsset <|-- UTechData
         UDataAsset <|-- UTechTreeAsset
@@ -39,12 +39,12 @@ classDiagram
         UTechTreeAsset : +TArray<UTechData*> AllTechnologies
     }
 
-    package "Runtime (游戏运行时)" {
+    package "Runtime" {
         class AActor
         class UActorComponent
         class UObject
         
-        UObject <|-- UTechSaveGame : (存档对象)
+        UObject <|-- UTechSaveGame
         AActor <|-- ATechManager
         UActorComponent <|-- UResearchComponent
 
@@ -61,13 +61,13 @@ classDiagram
         UTechSaveGame : +TMap<FName, FTechProgress> SavedTechStates
     }
     
-    package "Interfaces (解耦)" {
+    package "Interfaces" {
         class UInterface
         UInterface <|-- ITechUnlockReceiver
         ITechUnlockReceiver : +OnTechnologyUnlocked(UTechData* UnlockedTech)
     }
 
-    package "UI (可视化)" {
+    package "UI" {
         class UUserWidget
         UUserWidget <|-- UI_TechTree
         UI_TechTree : "Visualizes"
